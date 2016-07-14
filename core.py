@@ -27,12 +27,19 @@ PlayerBoost = namedtuple("PlayerBoost", [ 'team', 'attribute', 'value' ])
 
 # top level fields of Player class hold auction house searchable player characteristics.
 # Everything else is in attributes field
-Player = namedtuple("Player", ['name', 'display_name', 'program', 'position', 'team', 'ovr',
-                               'type', 'auctionable', 'boosts', 'gp_attributes', 'misc_attributes' ])
 
+#Player = namedtuple("Player", ['name', 'display_name', 'program', 'position', 'team', 'ovr',
+#                               'type', 'auctionable', 'boosts', 'gp_attributes', 'misc_attributes' ]) 
 
+# just to override repr
+class Player(namedtuple("Player", ['name', 'display_name', 'program', 'position', 'team', 'ovr',
+                               'type', 'auctionable', 'boosts', 'gp_attributes', 'misc_attributes' ])):
+        __slots__ = ()
+        def __str__(self):
+            return str(self.display_name)
 
-
+        def __repr__(self):
+            return str(self.display_name)
 
 
 class AuctionFilter(object):
