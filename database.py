@@ -2,7 +2,7 @@
 # Player database
 #
 
-from .core import Player, PlayerBoost, _PlayerGPAttributes, _PlayerMiscAttributes
+from core import Player, PlayerBoost, _PlayerGPAttributes, _PlayerMiscAttributes
 import os, csv
 
 def import_database_csv(infile):
