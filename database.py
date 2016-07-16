@@ -46,7 +46,7 @@ def import_database_csv(infile):
     player_name = line[column_map["FILTER NAME"]]
     player_program = line[column_map["PROGRAM"]]
     player_auctionable = line[column_map["AUCTION"]]
-    player_adjusted_ovr = float(column_map["ADJUSTED OVR"])
+    player_adjusted_ovr = float(line[column_map["ADJUSTED OVR"]])
 
     # just concat all parts of name, ignoring what is first & last and normalize case
     player_name = " ".join(player_name.split(', ')).lower()
