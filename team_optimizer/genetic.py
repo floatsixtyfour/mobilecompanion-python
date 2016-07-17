@@ -1,46 +1,76 @@
 from team import Team, _allowable_player_positions, _team_positions
 import random, copy
 
+def _pre_process_database(player_db, top_ovr_filter=50, include_boosted_players=True, constrained_players=None):
+    """
+    Filter & transform database of players for efficiency
 
-def _choose_random_player(players, team, roster_position, top_ovr_filter=50, include_boosted_players=True,
-                          verbose=False):
+    top_ovr_filter: only keep top n players for each roster postition
+    include_boosted_players: for inclusion of any players with boosts (these will
+                             be in addition to top_ovr_filter)
+
+    Filters player database and converts it into a more efficient format.  Ie, 
+    creates dict of roster_positions -> list of eligble players based on
+    _allowable_player_positions mapping
+
+    """
+    
+    preprocessed_db = dict()
+
+    for roster_position in _team_positions:
+        allowable_player_positions = _allowable_player_positions[roster_position]
+        possible_players_to_add = [ p for p in player_db if p.position in allowable_player_positions ]
+
+        if top_ovr_filter is not None:
+
+            # get list of boosted players now, before we filter
+            if include_boosted_players:
+                boosted_players = [ p for p in possible_players_to_add if len(p.boosts) > 0 ]
+            
+            # now filter
+            possible_players_to_add = sorted(possible_players_to_add, key=lambda x: x.adjusted_ovr, reverse=True)
+            possible_players_to_add = possible_players_to_add[:top_ovr_filter]
+
+            # and add back boosted players if needed
+            if include_boosted_players:
+                boosted_players = [ p for p in boosted_players if p not in possible_players_to_add ]
+                possible_players_to_add.extend(boosted_players)
+
+        preprocessed_db[roster_position] = possible_players_to_add
+
+    if constrained_players is not None:
+        for roster_position, possible_players_to_add in constrained_players.iteritems():
+            possible_players_to_add = [ p for p in player_db if p.display_name in possible_players_to_add ]
+            preprocessed_db[roster_position] = possible_players_to_add
+
+    return preprocessed_db
+
+
+def _choose_random_player(player_db, team, roster_position, verbose=False):
     """
     Choose a random player that is elibigle for roster_position
     
     """ 
 
-    allowable_player_positions = _allowable_player_positions[roster_position]
-    possible_players_to_add = [ p for p in players if p.position in allowable_player_positions ]
 
-    if top_ovr_filter is not None:
+    possible_players_to_add = player_db[roster_position]
 
-        # get list of boosted players now, before we filter
-        if include_boosted_players:
-            boosted_players = [ p for p in possible_players_to_add if len(p.boosts) > 0 ]
-        
-        # now filter
-        possible_players_to_add = sorted(possible_players_to_add, key=lambda x: x.ovr, reverse=True)
-        possible_players_to_add = possible_players_to_add[:top_ovr_filter]
-
-        # and add back boosted players if needed
-        if include_boosted_players:
-            boosted_players = [ p for p in boosted_players if p not in possible_players_to_add ]
-            possible_players_to_add.extend(boosted_players)
-
-    # now drop players already on roster 
-    possible_players_to_add = [ p for p in possible_players_to_add if p not in team.roster.values() ]
+    # now drop players already on roster
+    # we only do this if there is more than 1 possible player to add.  If there is only 1 player to add..
+    # that means this position is constrained to just 1 player so he must already be on the team! 
+    if len(possible_players_to_add) > 1:
+        possible_players_to_add = [ p for p in possible_players_to_add if p not in team.roster.values() ]
 
     if verbose:
-        print("Checking swaps for {} {} "
-                "[ {} players ]".format(roster_position,
-                                        allowable_player_positions, len(possible_players_to_add)))
+        print("Choosing random player for {}: "
+                "{} possible players".format(roster_position, len(possible_players_to_add)))
     # and pick random player 
     player_to_add = random.choice(possible_players_to_add)
 
     return player_to_add
 
 
-def create_individual(players, top_ovr_filter=50, include_boosted_players=True, verbose=False):
+def create_individual(player_db, verbose=False):
     """ 
     Create one random individual (team)
 
@@ -57,8 +87,8 @@ def create_individual(players, top_ovr_filter=50, include_boosted_players=True, 
 
     for roster_position in _team_positions:
 
-        player_to_add = _choose_random_player(players, team, roster_position, top_ovr_filter=top_ovr_filter,
-                                              include_boosted_players=include_boosted_players, verbose=verbose)
+        player_to_add = _choose_random_player(player_db, team, roster_position,  verbose=verbose)
+        
         if verbose:
             print("Adding {}: {}".format(roster_position, player_to_add.display_name))
 
@@ -66,8 +96,7 @@ def create_individual(players, top_ovr_filter=50, include_boosted_players=True, 
 
     return team
 
-def create_population(players, num_individuals, top_ovr_filter=50, include_boosted_players=True, 
-                      include_indivuals=None, verbose=False):
+def create_population(player_db, num_individuals, include_indivuals=None, verbose=False):
     """
     Create population of individuals
 
@@ -79,7 +108,7 @@ def create_population(players, num_individuals, top_ovr_filter=50, include_boost
 
     population = []
     for i in range(num_individuals - len(include_indivuals)):
-        new_individual = create_individual(players, top_ovr_filter=top_ovr_filter, include_boosted_players=include_boosted_players)
+        new_individual = create_individual(player_db)
         population.append(new_individual)
     
     population.extend(include_indivuals)
@@ -124,7 +153,7 @@ def combine_individuals(mother, father, verbose=False):
         return child
 
 
-def mutate_individual(team, players, mutation_probability=.5, mutation_rate=.1, verbose=False):
+def mutate_individual(team, player_db, mutation_probability=.5, mutation_rate=.1, verbose=False):
     
     if random.random() < mutation_probability:
         team = copy.deepcopy(team)
@@ -135,17 +164,19 @@ def mutate_individual(team, players, mutation_probability=.5, mutation_rate=.1, 
         for roster_position in team.roster.keys():
             if random.random() < mutation_rate:
 
-                player_to_add = _choose_random_player(players, team, roster_position)
+                player_to_add = _choose_random_player(player_db, team, roster_position)
                 if verbose:
                     print("Mutating position {}: {}".format(roster_position, player_to_add.display_name))
                 
-                team.set_position(roster_position, player_to_add)
+                # player may be the same if this position is constrained to just one possible player
+                if player_to_add.display_name != team.roster[roster_position].display_name:
+                    team.set_position(roster_position, player_to_add)
 
     return team
 
 
 
-def evolve_one_step(population, players, obj_func, mutation_probabiliy=.5, mutation_rate=.1,
+def evolve_one_step(population, player_db, obj_func, mutation_probabiliy=.5, mutation_rate=.1,
                     keep_top_pct=.2, mutate_pct=.5, verbose=False):
     """
     Evolve population one step
@@ -183,7 +214,7 @@ def evolve_one_step(population, players, obj_func, mutation_probabiliy=.5, mutat
 
     for i in range(mutate_count):
         individual_to_mutate = random.choice(population)
-        new_individual = mutate_individual(individual_to_mutate, players)
+        new_individual = mutate_individual(individual_to_mutate, player_db)
         mutated_individuals.append(new_individual)
     
     #
@@ -218,13 +249,19 @@ def _mean(values):
 
     return mean
 
-def optimize(population_size, players, obj_func, num_evolutions=1000, include_individuals=None, verbose=False):
+def optimize(population_size, players, obj_func, num_evolutions=1000, include_individuals=None, 
+             constrained_players=None, verbose=False):
+
+    if constrained_players is None:
+        constraned_players = {}
+
+    preprocessed_player_db = _pre_process_database(players, constrained_players=constrained_players)
 
     if include_individuals is not None:
         population = copy.deepcopy(include_individuals)
-        population.extend(create_population(players, population_size - len(include_individuals)))
+        population.extend(create_population(preprocessed_player_db, population_size - len(include_individuals)))
     else:
-        population = create_population(players, population_size)
+        population = create_population(preprocessed_player_db, population_size)
 
     obj_values = [ obj_func(t) for t in population ]
     mean_obj = _mean(obj_values)
@@ -236,7 +273,7 @@ def optimize(population_size, players, obj_func, num_evolutions=1000, include_in
 
 
     for istep in range(num_evolutions):
-        population = evolve_one_step(population, players, obj_func)
+        population = evolve_one_step(population, preprocessed_player_db, obj_func)
 
         obj_values = [ obj_func(t) for t in population ]
         mean_obj = _mean(obj_values)
