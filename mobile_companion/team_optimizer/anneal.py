@@ -1,7 +1,7 @@
 import random, math, copy
-from team import _allowable_player_positions
+from ..team import _allowable_player_positions
 
-def anneal(team, players, obj_func, candidate_roster_positions=None, verbose=False):
+def optimize(team, players, obj_func, candidate_roster_positions=None, verbose=False):
 
     if candidate_roster_positions is None:
         candidate_roster_positions = team.roster.keys()
@@ -81,7 +81,7 @@ def _random_step(team, players, candidate_roster_positions=None, verbose=False, 
                                         allowable_player_positions, len(possible_swaps)))
 
     # only check top 50 for now
-    potential_possible_swaps = sorted(possible_swaps, key=lambda x: x.ovr, reverse=True)[:50]
+    potential_possible_swaps = sorted(possible_swaps, key=lambda x: x.ovr, reverse=True)[:20]
     
     # add players with boosts too!
     boosted_swaps = [ p for p in possible_swaps if len(p.boosts) > 0 and p not in potential_possible_swaps ]

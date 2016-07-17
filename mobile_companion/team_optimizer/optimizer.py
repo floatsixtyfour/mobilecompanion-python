@@ -1,5 +1,5 @@
 import copy
-from team import _allowable_player_positions
+from ..team import _allowable_player_positions
 
 def best_swap(team, players, calculator, verbose=False):
     res_rounded = dict()

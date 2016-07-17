@@ -1,5 +1,50 @@
-from team import Team, _allowable_player_positions, _team_positions
+from ..team import Team, _allowable_player_positions, _team_positions
 import random, copy
+
+def optimize(population_size, players, obj_func, num_evolutions=1000, include_individuals=None, 
+             constrained_players=None, verbose=False):
+
+    if constrained_players is None:
+        constraned_players = {}
+
+    preprocessed_player_db = _pre_process_database(players, constrained_players=constrained_players)
+
+    if include_individuals is not None:
+        population = copy.deepcopy(include_individuals)
+        population.extend(create_population(preprocessed_player_db, population_size - len(include_individuals)))
+    else:
+        population = create_population(preprocessed_player_db, population_size)
+
+    obj_values = [ obj_func(t) for t in population ]
+    mean_obj = _mean(obj_values)
+    max_obj = max(obj_values)
+    prior_max = max_obj
+    
+    if verbose:
+        print("initial population: mean={:.2f}, max={:.2f}".format(mean_obj, max_obj))
+
+
+    for istep in range(num_evolutions):
+        population = evolve_one_step(population, preprocessed_player_db, obj_func)
+
+        obj_values = [ obj_func(t) for t in population ]
+        mean_obj = _mean(obj_values)
+        max_obj = max(obj_values)
+        
+        if verbose:
+            print("iteration[{}]: population: mean={:.2f}, max={:.2f}".format(istep, mean_obj, max_obj))
+
+        prior_max = max_obj
+        old_population = population
+
+    best_res = max(population, key=obj_func)
+
+    misc_res = dict()
+    misc_res['population'] = population
+    
+    return best_res, misc_res
+
+
 
 def _pre_process_database(player_db, top_ovr_filter=50, include_boosted_players=True, constrained_players=None):
     """
@@ -249,39 +294,3 @@ def _mean(values):
 
     return mean
 
-def optimize(population_size, players, obj_func, num_evolutions=1000, include_individuals=None, 
-             constrained_players=None, verbose=False):
-
-    if constrained_players is None:
-        constraned_players = {}
-
-    preprocessed_player_db = _pre_process_database(players, constrained_players=constrained_players)
-
-    if include_individuals is not None:
-        population = copy.deepcopy(include_individuals)
-        population.extend(create_population(preprocessed_player_db, population_size - len(include_individuals)))
-    else:
-        population = create_population(preprocessed_player_db, population_size)
-
-    obj_values = [ obj_func(t) for t in population ]
-    mean_obj = _mean(obj_values)
-    max_obj = max(obj_values)
-    prior_max = max_obj
-    
-    if verbose:
-        print("initial population: mean={:.2f}, max={:.2f}".format(mean_obj, max_obj))
-
-
-    for istep in range(num_evolutions):
-        population = evolve_one_step(population, preprocessed_player_db, obj_func)
-
-        obj_values = [ obj_func(t) for t in population ]
-        mean_obj = _mean(obj_values)
-        max_obj = max(obj_values)
-        
-        if verbose:
-            print("iteration[{}]: population: mean={:.2f}, max={:.2f}".format(istep, mean_obj, max_obj))
-
-        prior_max = max_obj
-        old_population = population
-    return population
