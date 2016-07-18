@@ -24,7 +24,6 @@ def optimize(population_size, players, obj_func, num_evolutions=1000, include_in
     if verbose:
         print("initial population: mean={:.2f}, max={:.2f}".format(mean_obj, max_obj))
 
-
     for istep in range(num_evolutions):
         population = evolve_one_step(population, preprocessed_player_db, obj_func)
 
