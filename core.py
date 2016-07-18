@@ -33,7 +33,7 @@ PlayerBoost = namedtuple("PlayerBoost", [ 'team', 'attribute', 'value' ])
 
 # just to override repr
 class Player(namedtuple("Player", ['name', 'display_name', 'program', 'position', 'team', 'ovr', 'adjusted_ovr',
-                               'type', 'auctionable', 'boosts', 'gp_attributes', 'misc_attributes' ])):
+                               'type', 'auctionable', 'boosts', 'gp_attributes', 'misc_attributes', 'date_added' ])):
         __slots__ = ()
         def __str__(self):
             return str(self.display_name)

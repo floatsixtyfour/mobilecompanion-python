@@ -3,7 +3,7 @@
 #
 
 from core import Player, PlayerBoost, _PlayerGPAttributes, _PlayerMiscAttributes
-import os, csv
+import os, csv, dateutil
 
 def import_database_csv(infile):
   """
@@ -47,6 +47,7 @@ def import_database_csv(infile):
     player_program = line[column_map["PROGRAM"]]
     player_auctionable = line[column_map["AUCTION"]]
     player_adjusted_ovr = float(line[column_map["ADJUSTED OVR"]])
+    player_date_added = dateutil.parser.parse(line[column_map['DATE']])
 
     # just concat all parts of name, ignoring what is first & last and normalize case
     player_name = " ".join(player_name.split(', ')).lower()
@@ -88,6 +89,7 @@ def import_database_csv(infile):
     player = Player(name=player_name, position=player_position, display_name=player_display_name,
                     program=player_program, team=player_team, ovr=player_ovr, adjusted_ovr=player_adjusted_ovr, 
                     type=player_type, boosts=player_boosts, auctionable=player_auctionable,
+                    date_added=player_date_added,
                     gp_attributes=gp_attributes, misc_attributes=misc_attributes)
 
     players.append(player)
