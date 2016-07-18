@@ -1,7 +1,11 @@
 import random, math, copy
 from ..team import _allowable_player_positions
+import util as opt_util
 
-def optimize(team, players, obj_func, candidate_roster_positions=None, verbose=False):
+def optimize(team, players, obj_func, T_min=.0001, T_alpha=.9995, T=1.0,
+             candidate_roster_positions=None, constrained_players=None, verbose=False):
+
+    player_db = opt_util.pre_process_database(players, constrained_players=constrained_players)
 
     if candidate_roster_positions is None:
         candidate_roster_positions = team.roster.keys()
@@ -12,20 +16,17 @@ def optimize(team, players, obj_func, candidate_roster_positions=None, verbose=F
     best_obj = original_obj
     best_team = team
 
-    T_min = .0001
-    T_alpha = .9995
-    T = 1.0
     iter = 0
     additional_runs = [ 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4, 5, 6, 7, 8]
 
     while T > T_min:
         current_obj = obj_func(team)
 
-        new_team = _random_step(team, players, candidate_roster_positions)
+        new_team = _random_step(team, player_db, candidate_roster_positions)
 
         # allow multiple moves occaisonaly
         for i in range(random.choice(additional_runs)):
-            new_team = _random_step(new_team, players, candidate_roster_positions)
+            new_team = _random_step(new_team, player_db, candidate_roster_positions)
 
 
         new_obj = obj_func(new_team)
@@ -49,7 +50,6 @@ def optimize(team, players, obj_func, candidate_roster_positions=None, verbose=F
             team = new_team
 
             if new_obj > best_obj:
-                print("New best obj!")
                 best_obj = new_obj
                 best_team = new_team
 
@@ -58,7 +58,7 @@ def optimize(team, players, obj_func, candidate_roster_positions=None, verbose=F
 
     return best_team
 
-def _random_step(team, players, candidate_roster_positions=None, verbose=False, debug=False):
+def _random_step(team, player_db, candidate_roster_positions=None, verbose=False, debug=False):
     """
     Find single best step to take
 
@@ -72,33 +72,16 @@ def _random_step(team, players, candidate_roster_positions=None, verbose=False, 
 
     roster_position = random.choice(candidate_roster_positions)
 
-    allowable_player_positions = _allowable_player_positions[roster_position]
-    possible_swaps = [ p for p in players if p.position in allowable_player_positions ]
+    possible_players_to_add = player_db[roster_position]
 
-    if verbose:
-        print("Checking swaps for {} {} "
-                "[ {} players ]".format(roster_position,
-                                        allowable_player_positions, len(possible_swaps)))
-
-    # only check top 50 for now
-    potential_possible_swaps = sorted(possible_swaps, key=lambda x: x.ovr, reverse=True)[:20]
-    
-    # add players with boosts too!
-    boosted_swaps = [ p for p in possible_swaps if len(p.boosts) > 0 and p not in potential_possible_swaps ]
-    potential_possible_swaps.extend(boosted_swaps)
-    
-
-    # remove players already on roster
-    possible_swaps = []
-    for swap_player in potential_possible_swaps:
-        if swap_player.name in [ p.name for p in team.roster.values() ]:
-            if debug:
-                print("Skipping existing player: {}".format(swap_player.display_name))
-        else:
-            possible_swaps.append(swap_player)
+    # now drop players already on roster
+    # we only do this if there is more than 1 possible player to add.  If there is only 1 player to add..
+    # that means this position is constrained to just 1 player so he must already be on the team! 
+    if len(possible_players_to_add) > 1:
+        possible_players_to_add = [ p for p in possible_players_to_add if p not in team.roster.values() ]
 
     # and pick random player 
-    swap_player = random.choice(possible_swaps)
+    swap_player = random.choice(possible_players_to_add)
 
     if verbose:
         print("replacing {} with {}".format(team.roster[roster_position], swap_player))
