@@ -3,7 +3,8 @@
 #
 
 from core import Player, PlayerBoost, _PlayerGPAttributes, _PlayerMiscAttributes
-import os, csv, dateutil
+import os, csv
+from datetime import datetime
 
 def import_database_csv(infile):
   """
@@ -47,7 +48,7 @@ def import_database_csv(infile):
     player_program = line[column_map["PROGRAM"]]
     player_auctionable = line[column_map["AUCTION"]]
     player_adjusted_ovr = float(line[column_map["ADJUSTED OVR"]])
-    player_date_added = dateutil.parser.parse(line[column_map['DATE']])
+    player_date_added = datetime.strptime(line[column_map['DATE']], "%m/%d/%Y")
 
     # just concat all parts of name, ignoring what is first & last and normalize case
     player_name = " ".join(player_name.split(', ')).lower()
