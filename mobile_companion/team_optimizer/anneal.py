@@ -1,11 +1,11 @@
 import random, math, copy
 from ..team import _allowable_player_positions
-import util as opt_util
+import util as _opt_util
 
 def optimize(team, players, obj_func, T_min=.0001, T_alpha=.9995, T=1.0,
              candidate_roster_positions=None, constrained_players=None, verbose=False):
 
-    player_db = opt_util.pre_process_database(players, constrained_players=constrained_players)
+    player_db = _opt_util.pre_process_database(players, constrained_players=constrained_players)
 
     if candidate_roster_positions is None:
         candidate_roster_positions = team.roster.keys()

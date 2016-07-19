@@ -1,5 +1,5 @@
 from ..team import Team, _allowable_player_positions, _team_positions
-import util as opt_util
+import util as _opt_util
 import random, copy
 
 def optimize(population_size, players, obj_func, num_evolutions=1000, include_individuals=None, 
@@ -8,7 +8,7 @@ def optimize(population_size, players, obj_func, num_evolutions=1000, include_in
     if constrained_players is None:
         constraned_players = {}
 
-    preprocessed_player_db = opt_util.pre_process_database(players, constrained_players=constrained_players)
+    preprocessed_player_db = _opt_util.pre_process_database(players, constrained_players=constrained_players)
 
     if include_individuals is not None:
         population = copy.deepcopy(include_individuals)

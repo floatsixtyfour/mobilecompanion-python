@@ -1,12 +1,12 @@
 import copy
 from ..team import _allowable_player_positions
-import util as opt_util
+import util as _opt_util
 
 
 def optimize(team, players, obj_func, constrained_players=None, candidate_roster_positions=None, verbose=False):
     new_team = copy.deepcopy(team)
 
-    player_db = opt_util.pre_process_database(players, constrained_players=constrained_players)
+    player_db = _opt_util.pre_process_database(players, constrained_players=constrained_players)
 
     initial_obj = obj_func(new_team)
     if verbose:
