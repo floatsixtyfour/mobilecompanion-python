@@ -9,7 +9,7 @@ import myopic as TOM
 import anneal as TOA
 import copy
 
-def optimize(players, obj_func, verbose=False, constrained_players=None):
+def optimize(players, obj_func, initial_guess=None, verbose=False, constrained_players=None):
     """
     Meta optimization using various underlying optimizers
     """
@@ -17,9 +17,13 @@ def optimize(players, obj_func, verbose=False, constrained_players=None):
     # we'll include various intermediate results in final GP for better diversity
     teams_to_include = []
 
+    if initial_guess is not None:
+        teams_to_include.append(initial_guess)
+
+
     # first try a small genetic opt to get a reasonable starting point
     best_team, res = TOG.optimize(5, players, obj_func=obj_func, num_evolutions=100, 
-                                  constrained_players=constrained_players)
+                                  constrained_players=constrained_players, include_individuals=teams_to_include)
     teams_to_include.append(copy.deepcopy(best_team))
     best_obj = obj_func(best_team)
 
@@ -27,7 +31,7 @@ def optimize(players, obj_func, verbose=False, constrained_players=None):
         print("Results from initial genetic opt: {}".format(best_obj))
     
     # now anneal that badboy
-    best_team = TOA.optimize(best_team, players, obj_func=obj_func, constrained_players=constrained_players, T_alpha=.99)
+    best_team = TOA.optimize(best_team, players, obj_func=obj_func, constrained_players=constrained_players)
     teams_to_include.append(copy.deepcopy(best_team))
     best_obj = obj_func(best_team)
     
