@@ -48,10 +48,20 @@ class Team(object):
                              "are: {}".format(player.display_name, player.position,
                                               roster_position, allowable_positions))
 
-        if player in self.roster.values():
+        if self.contains(player):
             raise ValueError("{} is already on roster".format(player.display_name))
 
         self.roster[roster_position] = player
+
+    def contains(self, player):
+        """
+        Check if a player is already on a team
+        """
+
+        res = player.name in [ p.name for p in self.roster.values() ]
+        return res
+
+        
 
     @property
     def offense(self):

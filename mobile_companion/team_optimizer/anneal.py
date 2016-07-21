@@ -78,7 +78,7 @@ def _random_step(team, player_db, candidate_roster_positions=None, verbose=False
     # we only do this if there is more than 1 possible player to add.  If there is only 1 player to add..
     # that means this position is constrained to just 1 player so he must already be on the team! 
     if len(possible_players_to_add) > 1:
-        possible_players_to_add = [ p for p in possible_players_to_add if p not in team.roster.values() ]
+        possible_players_to_add = [ p for p in possible_players_to_add if not team.contains(p) ]
 
     # and pick random player 
     swap_player = random.choice(possible_players_to_add)

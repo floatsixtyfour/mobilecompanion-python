@@ -73,7 +73,7 @@ def _best_step(team, player_db, obj_func, candidate_roster_positions=None, verbo
                   "{} potential players".format(roster_position, len(possible_swaps)))
 
         for possible_swap_player in possible_swaps:
-            if possible_swap_player.name in [ p.name for p in team.roster.values() ]:
+            if team.contains(possible_swap_player):
                 if debug:
                     print("Skipping existing player: {}".format(possible_swap_player.display_name))
                 continue
