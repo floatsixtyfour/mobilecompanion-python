@@ -48,17 +48,26 @@ class Team(object):
                              "are: {}".format(player.display_name, player.position,
                                               roster_position, allowable_positions))
 
-        if self.contains(player):
+        if self.contains(player, exclude_position=roster_position):
             raise ValueError("{} is already on roster".format(player.display_name))
 
         self.roster[roster_position] = player
 
-    def contains(self, player):
+    def contains(self, player, exclude_position=None):
         """
         Check if a player is already on a team
         """
 
-        res = player.name in [ p.name for p in self.roster.values() ]
+        if exclude_position is None:
+            res = player.name in [ p.name for p in self.roster.values() ]
+        else:
+            res = False
+            for k, v in self.roster.iteritems():
+                if k != exclude_position:
+                    if v.name == player.name:
+                        res = True
+                        break
+
         return res
 
         
