@@ -131,7 +131,7 @@ def combine_individuals(mother, father, verbose=False):
                 parent = random.choice([mother, father])
                 player_to_add = parent.roster[position]
 
-                if player_to_add in child.roster.values():
+                if child.contains(player_to_add, exclude_position=position):
                     if parent is mother:
                         parent = father
                     else:
